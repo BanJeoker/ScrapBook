@@ -1,38 +1,26 @@
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 # Example DataFrame
 data = {
-    'A': [1, 2, 3, 4, 5],
-    'B': [5, 4, 3, 2, 1],
-    'C': [1, 2, 1, 2, 1],
-    'D': [2, 4, 6, 8, 10]
+    'feature1': [1, 2, 3, 4, 5],
+    'feature2': [5, 4, 3, 2, 1],
+    'target': [1, 0, 1, 0, 1]
 }
 df = pd.DataFrame(data)
 
-# Calculate correlation matrix
-corr_matrix = df.corr().abs()
+# Separate features (X) and target (y)
+X = df.drop(columns=['target'])
+y = df['target']
 
-# Set the threshold for high correlation
-threshold = 0.8
+# Perform train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# List to keep track of features to drop
-to_drop = []
-
-# Loop through each feature
-for i in range(len(corr_matrix.columns)):
-    for j in range(i):
-        # Compare each pair of features
-        if corr_matrix.iloc[i, j] > threshold:
-            colname = corr_matrix.columns[i]
-            if colname not in to_drop:
-                to_drop.append(colname)
-
-# Drop the features
-df_reduced = df.drop(columns=to_drop)
-
-print("Original DataFrame:")
-print(df)
-print("\nFeatures to Drop:")
-print(to_drop)
-print("\nReduced DataFrame:")
-print(df_reduced)
+print("Training features:")
+print(X_train)
+print("\nTest features:")
+print(X_test)
+print("\nTraining target:")
+print(y_train)
+print("\nTest target:")
+print(y_test)

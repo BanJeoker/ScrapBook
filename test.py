@@ -27,8 +27,15 @@ smote = SMOTE(random_state=42)
 X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
 
 # Train the XGBoost model
-model = xgb.XGBClassifier(eval_metric='logloss', use_label_encoder=False, random_state=42)
-model.fit(X_train_resampled, y_train_resampled)
+import xgboost as xgb
+
+# Initialize the XGBoost model with class weights
+model = xgb.XGBClassifier(scale_pos_weight=len(negative_class) / len(positive_class),
+                          eval_metric='logloss',
+                          use_label_encoder=False,
+                          random_state=42)
+model.fit(X_train, y_train)
+
 
 # Evaluate on validation set
 y_val_pred = model.predict(X_val)
@@ -39,3 +46,4 @@ print(classification_report(y_val, y_val_pred))
 y_test_pred = model.predict(X_test)
 print("Test Performance:")
 print(classification_report(y_test, y_test_pred))
+

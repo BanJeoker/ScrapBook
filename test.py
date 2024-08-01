@@ -287,3 +287,85 @@ y_test_pred = best_model.predict(X_test_scaled)
 print("Test Performance:")
 print(classification_report(y_test, y_test_pred))
 
+########################
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import resample
+from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss
+import xgboost as xgb
+from sklearn.metrics import roc_curve, auc
+import matplotlib.pyplot as plt
+
+# Example DataFrame
+data = {
+    'feature1': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
+    'feature2': [5, 4, 3, 2, 1, 5, 4, 3, 2, 1],
+    'target': [1, 0, 1, 0, 1, 1, 0, 1, 0, 0]
+}
+df = pd.DataFrame(data)
+
+# Separate features and target
+X = df.drop(columns=['target'])
+y = df['target']
+
+# Split into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Normalize the features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Initialize XGBoost model
+model = xgb.XGBClassifier(eval_metric='logloss', use_label_encoder=False, random_state=42)
+
+# Fit model
+model.fit(X_train_scaled, y_train)
+
+# Predict probabilities
+y_train_pred_proba = model.predict_proba(X_train_scaled)[:, 1]  # Probabilities for the positive class
+y_test_pred_proba = model.predict_proba(X_test_scaled)[:, 1]    # Probabilities for the positive class
+
+# Predict classes
+y_train_pred = model.predict(X_train_scaled)
+y_test_pred = model.predict(X_test_scaled)
+
+# Compute metrics
+def compute_metrics(y_true, y_pred, y_pred_proba):
+    accuracy = accuracy_score(y_true, y_pred)
+    auc_roc = roc_auc_score(y_true, y_pred_proba)
+    f1 = f1_score(y_true, y_pred)
+    logloss = log_loss(y_true, y_pred_proba)
+    return accuracy, auc_roc, f1, logloss
+
+# Metrics for training set
+train_accuracy, train_auc_roc, train_f1, train_logloss = compute_metrics(y_train, y_train_pred, y_train_pred_proba)
+print("Training Metrics:")
+print(f"Accuracy: {train_accuracy:.4f}")
+print(f"AUC-ROC: {train_auc_roc:.4f}")
+print(f"F1 Score: {train_f1:.4f}")
+print(f"Log Loss: {train_logloss:.4f}")
+
+# Metrics for test set
+test_accuracy, test_auc_roc, test_f1, test_logloss = compute_metrics(y_test, y_test_pred, y_test_pred_proba)
+print("\nTest Metrics:")
+print(f"Accuracy: {test_accuracy:.4f}")
+print(f"AUC-ROC: {test_auc_roc:.4f}")
+print(f"F1 Score: {test_f1:.4f}")
+print(f"Log Loss: {test_logloss:.4f}")
+
+# Plot ROC Curve
+fpr, tpr, _ = roc_curve(y_test, y_test_pred_proba)
+roc_auc = auc(fpr, tpr)
+
+plt.figure()
+plt.plot(fpr, tpr, color='blue', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic')
+plt.legend(loc="lower right")
+plt.show()

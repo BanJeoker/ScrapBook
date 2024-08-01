@@ -156,3 +156,18 @@ print(f'F1 Score: {test_f1:.4f}')
 print(f'Log Loss: {test_logloss:.4f}')
 
 
+
+
+
+model = xgb.XGBClassifier(
+    eval_metric='logloss',
+    use_label_encoder=False,
+    alpha=1,                  # L1 regularization
+    lambda_=1,                # L2 regularization
+    max_depth=3,              # Maximum depth of a tree
+    min_child_weight=1,       # Minimum sum of instance weight needed in a child
+    subsample=0.8,            # Fraction of samples used for training each tree
+    colsample_bytree=0.8,     # Fraction of features used for each tree
+    learning_rate=0.05        # Step size shrinking
+)
+

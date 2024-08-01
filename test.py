@@ -369,3 +369,8 @@ plt.ylabel('True Positive Rate')
 plt.title('Receiver Operating Characteristic')
 plt.legend(loc="lower right")
 plt.show()
+
+
+plt.figure(figsize=(10, 6))
+xgb.plot_importance(model, importance_type='weight', title='Feature Importance', xlabel='Feature Importance', ylabel='Features')
+plt.show()

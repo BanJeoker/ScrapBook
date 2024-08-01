@@ -96,3 +96,63 @@ pipeline = Pipeline(steps=[
 # 4. Apply XGBoost with Sample Weights
 pipeline.fit(X_train_upsampled, y_train_upsampled, classifier__sample_weight=sample_weights)
 
+
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, log_loss
+import xgboost as xgb
+
+# Example DataFrame
+data = {
+    'feature1': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    'feature2': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+    'target': [0, 0, 0, 1, 0, 0, 0, 1, 1, 1]  # Imbalanced target
+}
+
+df = pd.DataFrame(data)
+
+# Separate features and target
+X = df.drop(columns=['target'])
+y = df['target']
+
+# 1. Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+
+# 2. Train XGBoost Classifier
+model = xgb.XGBClassifier(eval_metric='logloss', use_label_encoder=False)
+model.fit(X_train, y_train)
+
+# 3. Predictions
+y_train_pred_proba = model.predict_proba(X_train)[:, 1]
+y_test_pred_proba = model.predict_proba(X_test)[:, 1]
+
+y_train_pred = model.predict(X_train)
+y_test_pred = model.predict(X_test)
+
+# 4. Metrics
+train_accuracy = accuracy_score(y_train, y_train_pred)
+train_auc_roc = roc_auc_score(y_train, y_train_pred_proba)
+train_f1 = f1_score(y_train, y_train_pred)
+train_logloss = log_loss(y_train, y_train_pred_proba)
+
+test_accuracy = accuracy_score(y_test, y_test_pred)
+test_auc_roc = roc_auc_score(y_test, y_test_pred_proba)
+test_f1 = f1_score(y_test, y_test_pred)
+test_logloss = log_loss(y_test, y_test_pred_proba)
+
+# Print the results
+print("Training Metrics:")
+print(f'Accuracy: {train_accuracy:.4f}')
+print(f'AUC-ROC: {train_auc_roc:.4f}')
+print(f'F1 Score: {train_f1:.4f}')
+print(f'Log Loss: {train_logloss:.4f}')
+
+print("\nTesting Metrics:")
+print(f'Accuracy: {test_accuracy:.4f}')
+print(f'AUC-ROC: {test_auc_roc:.4f}')
+print(f'F1 Score: {test_f1:.4f}')
+print(f'Log Loss: {test_logloss:.4f}')
+
+

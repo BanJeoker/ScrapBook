@@ -82,3 +82,17 @@ print(f'Accuracy: {test_accuracy:.4f}')
 print(f'AUC-ROC: {test_auc_roc:.4f}')
 print(f'F1 Score: {test_f1:.4f}')
 print(f'Log Loss: {test_logloss:.4f}')
+
+
+
+sample_weights = np.where(y_train_upsampled == 1, 2, 1)  # Example: higher weight for positive class
+
+# Define the pipeline
+pipeline = Pipeline(steps=[
+    ('scaler', scaler),
+    ('classifier', XGBClassifier(eval_metric='logloss'))
+])
+
+# 4. Apply XGBoost with Sample Weights
+pipeline.fit(X_train_upsampled, y_train_upsampled, classifier__sample_weight=sample_weights)
+

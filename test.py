@@ -205,3 +205,85 @@ print(classification_report(y_val, y_val_pred))
 y_test_pred = best_model.predict(X_test_scaled)
 print("Test Performance:")
 print(classification_report(y_test, y_test_pred))
+
+-------------------------------------------------
+import pandas as pd
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import resample
+import xgboost as xgb
+from sklearn.metrics import classification_report
+
+# Example DataFrame
+data = {
+    'feature1': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
+    'feature2': [5, 4, 3, 2, 1, 5, 4, 3, 2, 1],
+    'target': [1, 0, 1, 0, 1, 1, 0, 1, 0, 0]
+}
+df = pd.DataFrame(data)
+
+# Separate features and target
+X = df.drop(columns=['target'])
+y = df['target']
+
+# Split into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Normalize the features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Combine training data
+X_train_combined = pd.DataFrame(X_train_scaled, columns=X.columns)
+X_train_combined['target'] = y_train.values
+
+# Separate majority and minority classes
+majority_class = X_train_combined[X_train_combined['target'] == 0]
+minority_class = X_train_combined[X_train_combined['target'] == 1]
+
+# Apply random oversampling
+minority_oversampled = resample(minority_class,
+                                replace=True,  # Sample with replacement
+                                n_samples=len(majority_class),  # Match majority class
+                                random_state=42)  # For reproducibility
+
+# Combine majority class with oversampled minority class
+X_train_oversampled = pd.concat([majority_class, minority_oversampled])
+
+# Separate features and target
+X_train_resampled = X_train_oversampled.drop(columns=['target'])
+y_train_resampled = X_train_oversampled['target']
+
+# Define the parameter grid for GridSearchCV
+param_grid = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [3, 5, 7],
+    'learning_rate': [0.01, 0.1, 0.2],
+    'subsample': [0.8, 0.9, 1.0]
+}
+
+# Initialize XGBoost model
+model = xgb.XGBClassifier(eval_metric='logloss', use_label_encoder=False, random_state=42)
+
+# Initialize GridSearchCV
+grid_search = GridSearchCV(estimator=model,
+                           param_grid=param_grid,
+                           scoring='accuracy',  # or another appropriate metric
+                           cv=3,  # Number of cross-validation folds
+                           n_jobs=-1,  # Use all available cores
+                           verbose=1)  # Print progress
+
+# Fit GridSearchCV
+grid_search.fit(X_train_resampled, y_train_resampled)
+
+# Best parameters and best score
+print("Best Parameters:", grid_search.best_params_)
+print("Best Score:", grid_search.best_score_)
+
+# Evaluate on test set with the best model
+best_model = grid_search.best_estimator_
+y_test_pred = best_model.predict(X_test_scaled)
+print("Test Performance:")
+print(classification_report(y_test, y_test_pred))
+

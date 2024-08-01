@@ -1,5 +1,8 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import SMOTE
+import xgboost as xgb
+from sklearn.metrics import classification_report
 
 # Example DataFrame
 data = {
@@ -9,18 +12,30 @@ data = {
 }
 df = pd.DataFrame(data)
 
-# Separate features (X) and target (y)
+# Separate features and target
 X = df.drop(columns=['target'])
 y = df['target']
 
-# Perform train-test split
+# Split into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-print("Training features:")
-print(X_train)
-print("\nTest features:")
-print(X_test)
-print("\nTraining target:")
-print(y_train)
-print("\nTest target:")
-print(y_test)
+# Further split the training set into training and validation sets
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
+# Apply resampling techniques to the training set
+smote = SMOTE(random_state=42)
+X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+
+# Train the XGBoost model
+model = xgb.XGBClassifier(eval_metric='logloss', use_label_encoder=False, random_state=42)
+model.fit(X_train_resampled, y_train_resampled)
+
+# Evaluate on validation set
+y_val_pred = model.predict(X_val)
+print("Validation Performance:")
+print(classification_report(y_val, y_val_pred))
+
+# Evaluate on test set
+y_test_pred = model.predict(X_test)
+print("Test Performance:")
+print(classification_report(y_test, y_test_pred))

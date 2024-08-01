@@ -19,7 +19,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 # 2. Normalization
 scaler = StandardScaler()
 
-# 3. Downsampling the Majority Class (Manually)
+# 3. Upsampling the Minority Class (Manually)
 # Combine the features and target into a single DataFrame for resampling
 train_data = pd.concat([X_train, y_train], axis=1)
 
@@ -27,18 +27,18 @@ train_data = pd.concat([X_train, y_train], axis=1)
 majority = train_data[train_data['target'] == 0]
 minority = train_data[train_data['target'] == 1]
 
-# Downsample majority class
-majority_downsampled = resample(majority,
-                                replace=False,  # Sample without replacement
-                                n_samples=len(minority),  # Match minority class size
-                                random_state=42)  # For reproducibility
+# Upsample minority class
+minority_upsampled = resample(minority,
+                              replace=True,  # Sample with replacement
+                              n_samples=len(majority),  # Match majority class size
+                              random_state=42)  # For reproducibility
 
-# Combine minority class with downsampled majority class
-downsampled = pd.concat([majority_downsampled, minority])
+# Combine upsampled minority class with majority class
+upsampled = pd.concat([majority, minority_upsampled])
 
 # Separate features and target again
-X_train_resampled = downsampled.drop(columns=['target'])
-y_train_resampled = downsampled['target']
+X_train_upsampled = upsampled.drop(columns=['target'])
+y_train_upsampled = upsampled['target']
 
 # Define the pipeline
 pipeline = Pipeline(steps=[
@@ -47,19 +47,38 @@ pipeline = Pipeline(steps=[
 ])
 
 # 4. Apply XGBoost
-pipeline.fit(X_train_resampled, y_train_resampled)
+pipeline.fit(X_train_upsampled, y_train_upsampled)
+
+# Predict on the training set
+y_train_pred_proba = pipeline.predict_proba(X_train_upsampled)[:, 1]  # Probability of the positive class
+y_train_pred = pipeline.predict(X_train_upsampled)
 
 # Predict on the test set
-y_pred_proba = pipeline.predict_proba(X_test)[:, 1]  # Probability of the positive class
-y_pred = pipeline.predict(X_test)
+y_test_pred_proba = pipeline.predict_proba(X_test)[:, 1]  # Probability of the positive class
+y_test_pred = pipeline.predict(X_test)
 
 # 5. Produce Metrics
-accuracy = accuracy_score(y_test, y_pred)
-auc_roc = roc_auc_score(y_test, y_pred_proba)
-f1 = f1_score(y_test, y_pred)
-logloss = log_loss(y_test, y_pred_proba)
+# Training metrics
+train_accuracy = accuracy_score(y_train_upsampled, y_train_pred)
+train_auc_roc = roc_auc_score(y_train_upsampled, y_train_pred_proba)
+train_f1 = f1_score(y_train_upsampled, y_train_pred)
+train_logloss = log_loss(y_train_upsampled, y_train_pred_proba)
 
-print(f'Accuracy: {accuracy:.4f}')
-print(f'AUC-ROC: {auc_roc:.4f}')
-print(f'F1 Score: {f1:.4f}')
-print(f'Log Loss: {logloss:.4f}')
+# Testing metrics
+test_accuracy = accuracy_score(y_test, y_test_pred)
+test_auc_roc = roc_auc_score(y_test, y_test_pred_proba)
+test_f1 = f1_score(y_test, y_test_pred)
+test_logloss = log_loss(y_test, y_test_pred_proba)
+
+# Print results
+print("Training Metrics:")
+print(f'Accuracy: {train_accuracy:.4f}')
+print(f'AUC-ROC: {train_auc_roc:.4f}')
+print(f'F1 Score: {train_f1:.4f}')
+print(f'Log Loss: {train_logloss:.4f}')
+
+print("\nTesting Metrics:")
+print(f'Accuracy: {test_accuracy:.4f}')
+print(f'AUC-ROC: {test_auc_roc:.4f}')
+print(f'F1 Score: {test_f1:.4f}')
+print(f'Log Loss: {test_logloss:.4f}')

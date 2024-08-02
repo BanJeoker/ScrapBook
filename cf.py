@@ -57,3 +57,37 @@ plt.title('Confusion Matrix for Optimal Threshold')
 
 plt.tight_layout()
 plt.show()
+
+
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Sample DataFrame
+data = pd.DataFrame({
+    'property_type': ['House', 'Apartment', 'House', 'Apartment', 'House', 'House', 'Apartment'],
+    'rating': ['A', 'B', 'A', 'A', 'B', 'B', 'C']
+})
+
+# Count the occurrences of each property_type and rating combination
+counts = data.groupby(['property_type', 'rating']).size().unstack(fill_value=0)
+
+# Plotting
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Plot the grouped bar chart
+counts.plot(kind='bar', ax=ax)
+
+# Customize the plot
+ax.set_xlabel('Property Type')
+ax.set_ylabel('Count')
+ax.set_title('Histogram of Property Types Separated by Rating')
+ax.legend(title='Rating', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+# Adjust layout
+plt.tight_layout()
+
+# Show plot
+plt.show()

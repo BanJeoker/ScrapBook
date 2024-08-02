@@ -91,3 +91,33 @@ plt.tight_layout()
 
 # Show plot
 plt.show()
+
+
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Sample DataFrame
+data = pd.DataFrame({
+    'rating': ['A', 'A', 'A', 'B', 'B', 'C', 'C', 'C', 'C'],
+    'pre_rating': ['X', 'X', 'Y', 'X', 'Z', 'Y', 'Y', 'Z', 'X']
+})
+
+# Set up the matplotlib figure
+plt.figure(figsize=(12, 8))
+
+# Use seaborn's histplot to plot the histogram with different pre_ratings for each rating
+sns.histplot(data=data, x='pre_rating', hue='rating', multiple='dodge', discrete=True)
+
+# Customize the plot
+plt.xlabel('Pre Rating')
+plt.ylabel('Count')
+plt.title('Distribution of Pre Ratings for Each Rating')
+plt.legend(title='Rating')
+
+# Show plot
+plt.tight_layout()
+plt.show()
+
